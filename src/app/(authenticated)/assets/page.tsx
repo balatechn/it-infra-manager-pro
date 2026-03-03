@@ -20,6 +20,8 @@ export default function AssetsPage() {
   const [editing, setEditing] = useState(false);
 
   const { data, loading, refetch } = useApi<PaginatedResponse<Asset>>(`/assets?page=${page}&search=${search}`);
+  const { data: vendorsList } = useApi<any>('/vendors?limit=200');
+  const { data: usersList } = useApi<any>('/settings/users');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -115,6 +117,8 @@ export default function AssetsPage() {
           <Input label="Department" value={form.department || ''} onChange={e => setForm({ ...form, department: e.target.value })} />
           <Input label="Purchase Date" type="date" value={form.purchase_date || ''} onChange={e => setForm({ ...form, purchase_date: e.target.value })} />
           <Input label="Warranty Expiry" type="date" value={form.warranty_expiry || ''} onChange={e => setForm({ ...form, warranty_expiry: e.target.value })} />
+          <Select label="Vendor" options={(vendorsList?.data || []).map((v: any) => ({ value: v.id, label: v.name }))} value={form.vendor_id || ''} onChange={e => setForm({ ...form, vendor_id: e.target.value })} />
+          <Select label="Assigned To" options={(usersList?.users || usersList || []).map((u: any) => ({ value: u.id, label: u.full_name }))} value={form.assigned_to || ''} onChange={e => setForm({ ...form, assigned_to: e.target.value })} />
           <div className="md:col-span-2">
             <Textarea label="Notes" value={form.notes || ''} onChange={e => setForm({ ...form, notes: e.target.value })} />
           </div>

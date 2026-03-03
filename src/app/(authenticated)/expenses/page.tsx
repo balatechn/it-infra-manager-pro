@@ -6,8 +6,9 @@ import PageHeader from '@/components/layout/PageHeader';
 import DataTable, { Pagination } from '@/components/tables/DataTable';
 import { Button, Input, Select, Modal, Textarea, Badge, Card } from '@/components/ui';
 import { formatCurrency, formatDate, getRenewalBadge, getPaymentBadge } from '@/lib/utils';
-import { Plus, Search, RefreshCw, Calendar, TrendingUp } from 'lucide-react';
+import { Plus, Search, RefreshCw, Calendar, TrendingUp, List } from 'lucide-react';
 import type { Expense, PaginatedResponse } from '@/types';
+import RenewalCalendar from '@/components/charts/RenewalCalendar';
 
 const expenseTypes = ['Software', 'AMC', 'Internet', 'Cloud', 'Hardware', 'Security', 'Domain', 'Misc'].map(v => ({ value: v, label: v }));
 const billingTypes = ['Monthly', 'Quarterly', 'Yearly', 'One-Time'].map(v => ({ value: v, label: v }));
@@ -25,10 +26,13 @@ export default function ExpensesPage() {
   const [renewForm, setRenewForm] = useState<any>({});
   const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
   const [editing, setEditing] = useState(false);
+  const [view, setView] = useState<'list' | 'calendar'>('list');
 
   const queryStr = `/expenses?page=${page}&search=${search}${filterType ? `&expense_type=${filterType}` : ''}`;
   const { data, loading, refetch } = useApi<PaginatedResponse<Expense>>(queryStr);
   const { data: forecast } = useApi<any>('/expenses/forecast');
+  const { data: vendorsList } = useApi<any>('/vendors?limit=200');
+  const { data: assetsList } = useApi<any>('/assets?limit=200');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -93,6 +97,7 @@ export default function ExpensesPage() {
         <div className="flex gap-2">
           <button onClick={(e) => { e.stopPropagation(); setForm(r); setEditing(true); setShowModal(true); }} className="text-primary-600 hover:underline text-xs">Edit</button>
           <button onClick={(e) => { e.stopPropagation(); setRenewForm({ id: r.id, new_expiry_date: '', new_amount: r.amount }); setShowRenewModal(true); }} className="text-green-600 hover:underline text-xs">Renew</button>
+          <button onClick={(e) => { e.stopPropagation(); if (confirm('Delete this expense?')) { api.delete(`/expenses/${r.id}`).then(() => refetch()); } }} className="text-red-600 hover:underline text-xs">Delete</button>
         </div>
       )
     },
@@ -104,9 +109,15 @@ export default function ExpensesPage() {
         title="Expenses"
         subtitle="Manage all IT expenses, licenses, and renewals"
         actions={
-          <Button onClick={() => { setForm({}); setEditing(false); setShowModal(true); }}>
-            <Plus size={16} /> Add Expense
-          </Button>
+          <div className="flex gap-2">
+            <div className="flex rounded-lg border border-gray-300 dark:border-gray-600 overflow-hidden">
+              <button onClick={() => setView('list')} className={`px-3 py-2 text-xs flex items-center gap-1 ${view === 'list' ? 'bg-primary-600 text-white' : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400'}`}><List size={14} /> List</button>
+              <button onClick={() => setView('calendar')} className={`px-3 py-2 text-xs flex items-center gap-1 ${view === 'calendar' ? 'bg-primary-600 text-white' : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400'}`}><Calendar size={14} /> Calendar</button>
+            </div>
+            <Button onClick={() => { setForm({}); setEditing(false); setShowModal(true); }}>
+              <Plus size={16} /> Add Expense
+            </Button>
+          </div>
         }
       />
 
@@ -132,30 +143,38 @@ export default function ExpensesPage() {
         </div>
       )}
 
-      {/* Filters */}
-      <div className="mb-4 flex flex-wrap gap-3">
-        <div className="relative flex-1 max-w-md">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search expenses..."
-            value={search}
-            onChange={e => { setSearch(e.target.value); setPage(1); }}
-            className="w-full pl-9 pr-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-          />
-        </div>
-        <select
-          value={filterType}
-          onChange={e => { setFilterType(e.target.value); setPage(1); }}
-          className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm"
-        >
-          <option value="">All Types</option>
-          {expenseTypes.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
-        </select>
-      </div>
+      {/* Calendar View */}
+      {view === 'calendar' && <RenewalCalendar />}
 
-      <DataTable columns={columns} data={data?.data || []} loading={loading} onRowClick={viewDetail} />
-      {data && <Pagination page={data.page} totalPages={data.totalPages} onPageChange={setPage} />}
+      {/* List View */}
+      {view === 'list' && (
+        <>
+          {/* Filters */}
+          <div className="mb-4 flex flex-wrap gap-3">
+            <div className="relative flex-1 max-w-md">
+              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search expenses..."
+                value={search}
+                onChange={e => { setSearch(e.target.value); setPage(1); }}
+                className="w-full pl-9 pr-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+              />
+            </div>
+            <select
+              value={filterType}
+              onChange={e => { setFilterType(e.target.value); setPage(1); }}
+              className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm"
+            >
+              <option value="">All Types</option>
+              {expenseTypes.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+            </select>
+          </div>
+
+          <DataTable columns={columns} data={data?.data || []} loading={loading} onRowClick={viewDetail} />
+          {data && <Pagination page={data.page} totalPages={data.totalPages} onPageChange={setPage} />}
+        </>
+      )}
 
       {/* Add/Edit Expense Modal */}
       <Modal open={showModal} onClose={() => setShowModal(false)} title={editing ? 'Edit Expense' : 'Add Expense'} size="xl">
@@ -163,6 +182,8 @@ export default function ExpensesPage() {
           <Input label="Expense Name" value={form.expense_name || ''} onChange={e => setForm({ ...form, expense_name: e.target.value })} required />
           <Select label="Expense Type" options={expenseTypes} value={form.expense_type || ''} onChange={e => setForm({ ...form, expense_type: e.target.value })} required />
           <Input label="Category" value={form.category || ''} onChange={e => setForm({ ...form, category: e.target.value })} />
+          <Select label="Vendor" options={(vendorsList?.data || []).map((v: any) => ({ value: v.id, label: v.name }))} value={form.vendor_id || ''} onChange={e => setForm({ ...form, vendor_id: e.target.value })} />
+          <Select label="Linked Asset" options={(assetsList?.data || []).map((a: any) => ({ value: a.id, label: `${a.asset_tag} - ${a.name}` }))} value={form.asset_id || ''} onChange={e => setForm({ ...form, asset_id: e.target.value })} />
           <Input label="Amount" type="number" step="0.01" value={form.amount || ''} onChange={e => setForm({ ...form, amount: e.target.value })} required />
           <Select label="Billing Type" options={billingTypes} value={form.billing_type || ''} onChange={e => setForm({ ...form, billing_type: e.target.value })} required />
           <Input label="Start Date" type="date" value={form.start_date || ''} onChange={e => setForm({ ...form, start_date: e.target.value })} />
@@ -176,6 +197,22 @@ export default function ExpensesPage() {
           </div>
           <Input label="Location Allocation" value={form.location_allocation || ''} onChange={e => setForm({ ...form, location_allocation: e.target.value })} />
           <Input label="Department Allocation" value={form.department_allocation || ''} onChange={e => setForm({ ...form, department_allocation: e.target.value })} />
+
+          {/* Invoice Upload */}
+          <div className="flex flex-col gap-1">
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Invoice (PDF)</label>
+            <input type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={async (e) => {
+              const file = e.target.files?.[0];
+              if (!file) return;
+              const fd = new FormData();
+              fd.append('file', file);
+              try {
+                const res = await api.post('/upload', fd);
+                setForm({ ...form, invoice_path: res.path });
+              } catch (err: any) { alert(err.message); }
+            }} className="text-sm text-gray-500 file:mr-2 file:py-1 file:px-3 file:rounded-lg file:border file:border-gray-300 file:text-xs file:font-medium file:bg-white dark:file:bg-gray-700 file:text-gray-700 dark:file:text-gray-300 hover:file:bg-gray-50" />
+            {form.invoice_path && <span className="text-xs text-green-600">Invoice attached</span>}
+          </div>
 
           {/* Software License Fields */}
           {form.expense_type === 'Software' && (

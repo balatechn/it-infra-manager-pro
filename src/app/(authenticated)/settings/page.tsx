@@ -115,22 +115,73 @@ function UsersSection() {
 
 /* ─── Roles Section ────────────────────────────────── */
 function RolesSection() {
-  const { data: roles, loading } = useApi<any[]>('/settings/roles');
+  const { data: roles, loading, refetch } = useApi<any[]>('/settings/roles');
+  const [show, setShow] = useState(false);
+  const [editing, setEditing] = useState<any>(null);
+  const [form, setForm] = useState({ name: '', description: '', permissions: '' });
+
+  const openAdd = () => { setEditing(null); setForm({ name: '', description: '', permissions: '' }); setShow(true); };
+  const openEdit = (r: any) => {
+    setEditing(r);
+    const perms = typeof r.permissions === 'object' ? Object.keys(r.permissions).filter(k => r.permissions[k]).join(', ') : '';
+    setForm({ name: r.name, description: r.description || '', permissions: perms });
+    setShow(true);
+  };
+
+  const save = async () => {
+    try {
+      const permObj: Record<string, boolean> = {};
+      form.permissions.split(',').map(s => s.trim()).filter(Boolean).forEach(p => { permObj[p] = true; });
+      const body = { name: form.name, description: form.description, permissions: permObj };
+      if (editing) { await api.put(`/settings/roles/${editing.id}`, body); }
+      else { await api.post('/settings/roles', body); }
+      setShow(false); refetch();
+    } catch (e: any) { alert(e.message); }
+  };
+
+  const remove = async (id: string) => {
+    if (!confirm('Delete this role?')) return;
+    try { await api.delete(`/settings/roles/${id}`); refetch(); } catch (e: any) { alert(e.message); }
+  };
 
   const cols = [
     { key: 'name', header: 'Role Name', render: (r: any) => <span className="font-medium">{r.name}</span> },
     { key: 'description', header: 'Description' },
     { key: 'permissions', header: 'Permissions', render: (r: any) => {
-      const perms: string[] = r.permissions || [];
+      const perms = r.permissions ? Object.keys(r.permissions).filter(k => r.permissions[k]) : [];
       return <div className="flex flex-wrap gap-1">{perms.slice(0, 5).map((p: string) => <Badge key={p} variant="gray">{p}</Badge>)}{perms.length > 5 && <Badge variant="info">+{perms.length - 5}</Badge>}</div>;
     }},
+    { key: 'actions', header: '', render: (r: any) => (
+      <div className="flex gap-1">
+        <button onClick={() => openEdit(r)} className="p-1 text-primary-600 hover:bg-primary-50 rounded"><Pencil size={14} /></button>
+        <button onClick={() => remove(r.id)} className="p-1 text-red-600 hover:bg-red-50 rounded"><Trash2 size={14} /></button>
+      </div>
+    )},
   ];
 
   return (
-    <Card>
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Roles & Permissions</h3>
-      {loading ? <Spinner /> : <DataTable columns={cols} data={roles || []} />}
-    </Card>
+    <>
+      <Card>
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Roles & Permissions</h3>
+          <Button size="sm" onClick={openAdd}><Plus size={14} /> Add Role</Button>
+        </div>
+        {loading ? <Spinner /> : <DataTable columns={cols} data={roles || []} />}
+      </Card>
+
+      <Modal open={show} onClose={() => setShow(false)} title={editing ? 'Edit Role' : 'Add Role'} size="md">
+        <div className="space-y-4">
+          <Input label="Role Name" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="e.g. IT Manager" />
+          <Input label="Description" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} placeholder="Role description" />
+          <Input label="Permissions (comma-separated)" value={form.permissions} onChange={e => setForm({ ...form, permissions: e.target.value })} placeholder="e.g. assets, expenses, tickets, reports" />
+          <p className="text-xs text-gray-500">Available: all, assets, expenses, expenses_view, tickets, snmp, vendors, vendors_view, reports, settings, view_only</p>
+          <div className="flex justify-end gap-3 pt-2">
+            <Button variant="secondary" onClick={() => setShow(false)}>Cancel</Button>
+            <Button onClick={save}>{editing ? 'Update' : 'Create'}</Button>
+          </div>
+        </div>
+      </Modal>
+    </>
   );
 }
 
@@ -151,12 +202,12 @@ function MastersSection() {
   const { data, loading, refetch } = useApi<any[]>(`/settings/masters?type=${masterType}`);
   const [show, setShow] = useState(false);
   const [editing, setEditing] = useState<any>(null);
-  const [form, setForm] = useState({ type: '', value: '', label: '', sort_order: 0, is_active: true });
+  const [form, setForm] = useState({ type: '', name: '', description: '', sort_order: 0, is_active: true });
 
   useEffect(() => { refetch(); }, [masterType]);
 
-  const openAdd = () => { setEditing(null); setForm({ type: masterType, value: '', label: '', sort_order: 0, is_active: true }); setShow(true); };
-  const openEdit = (m: any) => { setEditing(m); setForm({ type: m.type, value: m.value, label: m.label, sort_order: m.sort_order, is_active: m.is_active }); setShow(true); };
+  const openAdd = () => { setEditing(null); setForm({ type: masterType, name: '', description: '', sort_order: 0, is_active: true }); setShow(true); };
+  const openEdit = (m: any) => { setEditing(m); setForm({ type: m.type, name: m.name, description: m.description || '', sort_order: m.sort_order, is_active: m.is_active }); setShow(true); };
 
   const save = async () => {
     try {
@@ -169,8 +220,8 @@ function MastersSection() {
   const remove = async (id: string) => { if (!confirm('Delete?')) return; await api.delete(`/settings/masters/${id}`); refetch(); };
 
   const cols = [
-    { key: 'value', header: 'Value' },
-    { key: 'label', header: 'Label' },
+    { key: 'name', header: 'Name' },
+    { key: 'description', header: 'Description' },
     { key: 'sort_order', header: 'Order' },
     { key: 'is_active', header: 'Active', render: (r: any) => <Badge variant={r.is_active ? 'success' : 'danger'}>{r.is_active ? 'Yes' : 'No'}</Badge> },
     { key: 'actions', header: '', render: (r: any) => (
@@ -199,8 +250,8 @@ function MastersSection() {
 
       <Modal open={show} onClose={() => setShow(false)} title={editing ? 'Edit Master' : 'Add Master'} size="sm">
         <div className="space-y-4">
-          <Input label="Value" value={form.value} onChange={e => setForm({ ...form, value: e.target.value })} placeholder="e.g. saas" />
-          <Input label="Label" value={form.label} onChange={e => setForm({ ...form, label: e.target.value })} placeholder="e.g. SaaS Subscription" />
+          <Input label="Name" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="e.g. Software" />
+          <Input label="Description" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} placeholder="e.g. Software Licenses" />
           <Input label="Sort Order" type="number" value={String(form.sort_order)} onChange={e => setForm({ ...form, sort_order: parseInt(e.target.value) || 0 })} />
           <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" checked={form.is_active} onChange={e => setForm({ ...form, is_active: e.target.checked })} /> Active

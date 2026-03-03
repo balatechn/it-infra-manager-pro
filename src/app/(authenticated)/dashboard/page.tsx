@@ -13,7 +13,7 @@ import {
 export default function DashboardPage() {
   const { data: stats, loading } = useApi<DashboardStats>('/dashboard/stats');
   const { data: trend } = useApi<any[]>('/dashboard/expense-trend');
-  const { data: vendorDist } = useApi<any[]>('/dashboard/vendor-distribution');
+  const { data: vendorDist } = useApi<any[]>('/dashboard/vendor-cost');
   const { data: renewalForecast } = useApi<any[]>('/dashboard/renewal-forecast');
   const { data: categoryPie } = useApi<any[]>('/dashboard/expense-category');
 

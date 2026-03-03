@@ -17,7 +17,7 @@ export default function ReportsPage() {
 
   const exportFile = async (type: 'excel' | 'pdf') => {
     try {
-      const reportMap: Record<string, string> = { 'monthly-budget': 'monthly-budget', 'vendor-cost': 'vendor-cost', 'renewal-timeline': 'renewals', 'overdue-payments': 'overdue' };
+      const reportMap: Record<string, string> = { 'monthly-budget': 'monthly-budget', 'annual-forecast': 'annual-forecast', 'license-utilization': 'license-utilization', 'vendor-cost': 'vendor-cost', 'renewal-timeline': 'renewals', 'overdue-payments': 'overdue' };
       const reportKey = reportMap[active];
       if (!reportKey) { alert('Export not available for this report'); return; }
       const blob = await api.get(`/reports/export/${type}/${reportKey}`);

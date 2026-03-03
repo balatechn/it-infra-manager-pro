@@ -29,8 +29,32 @@ async function fetchApi(endpoint: string, options: FetchOptions = {}) {
   });
 
   if (res.status === 401) {
+    // Try to refresh the token before giving up
+    const refreshToken = typeof window !== 'undefined' ? localStorage.getItem('refreshToken') : null;
+    if (refreshToken && !endpoint.includes('/auth/refresh')) {
+      try {
+        const refreshRes = await fetch(`${API_BASE}/auth/refresh`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ refreshToken }),
+        });
+        if (refreshRes.ok) {
+          const refreshData = await refreshRes.json();
+          localStorage.setItem('token', refreshData.token);
+          // Retry the original request with the new token
+          headers['Authorization'] = `Bearer ${refreshData.token}`;
+          const retryRes = await fetch(`${API_BASE}${endpoint}`, { ...fetchOpts, headers });
+          if (retryRes.ok) {
+            const ct = retryRes.headers.get('content-type') || '';
+            if (ct.includes('application/pdf') || ct.includes('spreadsheetml') || ct.includes('octet-stream')) return retryRes.blob();
+            return retryRes.json();
+          }
+        }
+      } catch {}
+    }
     if (typeof window !== 'undefined') {
       localStorage.removeItem('token');
+      localStorage.removeItem('refreshToken');
       localStorage.removeItem('user');
       window.location.href = '/login';
     }

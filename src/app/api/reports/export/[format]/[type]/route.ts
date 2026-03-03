@@ -32,6 +32,30 @@ export async function GET(
         title = 'Overdue Payment Report';
         data = (await pool.query(`SELECT e.expense_name, e.amount, e.payment_due_date, v.name as vendor FROM expenses e LEFT JOIN vendors v ON e.vendor_id = v.id WHERE e.payment_status = 'Overdue' AND e.is_active = true ORDER BY e.payment_due_date`)).rows;
         break;
+      case 'annual-forecast':
+        title = 'Annual IT Forecast Report';
+        data = (await pool.query(`
+          SELECT expense_type,
+            SUM(CASE WHEN billing_type='Monthly' THEN amount ELSE 0 END) as monthly,
+            SUM(CASE WHEN billing_type='Quarterly' THEN amount ELSE 0 END) as quarterly,
+            SUM(CASE WHEN billing_type='Yearly' THEN amount ELSE 0 END) as yearly,
+            SUM(CASE WHEN billing_type='One-Time' THEN amount ELSE 0 END) as one_time,
+            SUM(CASE WHEN billing_type='Monthly' THEN amount*12 WHEN billing_type='Quarterly' THEN amount*4 WHEN billing_type='Yearly' THEN amount ELSE amount END) as annual_total
+          FROM expenses WHERE is_active = true AND deleted_at IS NULL GROUP BY expense_type ORDER BY annual_total DESC
+        `)).rows;
+        break;
+      case 'license-utilization':
+        title = 'Software License Utilization Report';
+        data = (await pool.query(`
+          SELECT e.expense_name, e.license_type, e.total_licenses, e.licenses_assigned,
+            (COALESCE(e.total_licenses,0) - COALESCE(e.licenses_assigned,0)) as available,
+            CASE WHEN e.total_licenses > 0 THEN ROUND((e.licenses_assigned::decimal / e.total_licenses) * 100, 1) ELSE 0 END as utilization_pct,
+            v.name as vendor_name
+          FROM expenses e LEFT JOIN vendors v ON e.vendor_id = v.id
+          WHERE e.expense_type = 'Software' AND e.is_active = true AND e.deleted_at IS NULL
+          ORDER BY utilization_pct DESC
+        `)).rows;
+        break;
       default:
         return NextResponse.json({ error: 'Invalid report type' }, { status: 400 });
     }

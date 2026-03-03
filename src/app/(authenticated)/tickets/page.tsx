@@ -20,6 +20,8 @@ export default function TicketsPage() {
   const [editing, setEditing] = useState(false);
 
   const { data, loading, refetch } = useApi<PaginatedResponse<Ticket>>(`/tickets?page=${page}&search=${search}`);
+  const { data: usersList } = useApi<any>('/settings/users');
+  const { data: assetsList } = useApi<any>('/assets?limit=200');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,7 +56,10 @@ export default function TicketsPage() {
     { key: 'created_at', header: 'Created', render: (r: Ticket) => formatDate(r.created_at) },
     {
       key: 'actions', header: 'Actions', render: (r: Ticket) => (
-        <button onClick={(e) => { e.stopPropagation(); setForm(r); setEditing(true); setShowModal(true); }} className="text-primary-600 hover:underline text-xs">Edit</button>
+        <div className="flex gap-2">
+          <button onClick={(e) => { e.stopPropagation(); setForm(r); setEditing(true); setShowModal(true); }} className="text-primary-600 hover:underline text-xs">Edit</button>
+          <button onClick={(e) => { e.stopPropagation(); if (confirm('Delete this ticket?')) { api.delete(`/tickets/${r.id}`).then(() => refetch()); } }} className="text-red-600 hover:underline text-xs">Delete</button>
+        </div>
       )
     },
   ];
@@ -81,6 +86,8 @@ export default function TicketsPage() {
           <Input label="Category" value={form.category || ''} onChange={e => setForm({ ...form, category: e.target.value })} />
           <Select label="Priority" options={priorities} value={form.priority || ''} onChange={e => setForm({ ...form, priority: e.target.value })} />
           {editing && <Select label="Status" options={statuses} value={form.status || ''} onChange={e => setForm({ ...form, status: e.target.value })} />}
+          <Select label="Assigned To" options={(usersList?.users || usersList || []).map((u: any) => ({ value: u.id, label: u.full_name }))} value={form.assigned_to || ''} onChange={e => setForm({ ...form, assigned_to: e.target.value })} />
+          <Select label="Linked Asset" options={(assetsList?.data || []).map((a: any) => ({ value: a.id, label: `${a.asset_tag} - ${a.name}` }))} value={form.asset_id || ''} onChange={e => setForm({ ...form, asset_id: e.target.value })} />
           <div className="md:col-span-2">
             <Textarea label="Description" value={form.description || ''} onChange={e => setForm({ ...form, description: e.target.value })} />
           </div>
