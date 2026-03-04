@@ -13,7 +13,7 @@ const menuItems = [
   { href: '/assets', label: 'Assets', icon: Monitor },
   { href: '/snmp', label: 'SNMP Devices', icon: Network },
   { href: '/expenses', label: 'Expenses', icon: DollarSign },
-  { href: '/tickets', label: 'Tasks', icon: Ticket },
+  { href: '/tickets', label: 'Tickets', icon: Ticket },
   { href: '/vendors', label: 'Vendors', icon: Building2 },
   { href: '/reports', label: 'Reports', icon: FileBarChart },
   { href: '/settings', label: 'Settings', icon: Settings },

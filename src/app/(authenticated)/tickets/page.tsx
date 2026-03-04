@@ -78,13 +78,13 @@ export default function TicketsPage() {
 
   return (
     <div>
-      <PageHeader title="IT Tasks" subtitle="Requests, Issues, Follow-ups & Tasks"
-        actions={<Button onClick={() => { setForm({ task_type: 'REQUEST', status: 'PENDING' }); setEditing(false); setShowModal(true); }}><Plus size={16} /> New Task</Button>} />
+      <PageHeader title="Tickets" subtitle="IT Support Tickets"
+        actions={<Button onClick={() => { setForm({ task_type: 'REQUEST', status: 'PENDING' }); setEditing(false); setShowModal(true); }}><Plus size={16} /> New Ticket</Button>} />
 
       <div className="mb-4">
         <div className="relative max-w-md">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          <input type="text" placeholder="Search tasks..." value={search} onChange={e => { setSearch(e.target.value); setPage(1); }}
+          <input type="text" placeholder="Search tickets..." value={search} onChange={e => { setSearch(e.target.value); setPage(1); }}
             className="w-full pl-9 pr-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
         </div>
       </div>
@@ -92,7 +92,7 @@ export default function TicketsPage() {
       <DataTable columns={columns} data={data?.data || []} loading={loading} />
       {data && <Pagination page={data.page} totalPages={data.totalPages} onPageChange={setPage} />}
 
-      <Modal open={showModal} onClose={() => setShowModal(false)} title={editing ? 'Edit Task' : 'New Task'} size="xl">
+      <Modal open={showModal} onClose={() => setShowModal(false)} title={editing ? 'Edit Ticket' : 'New Ticket'} size="xl">
         <form onSubmit={handleSubmit} className="space-y-5">
 
           {/* Section 1: Task & Requester Details */}
