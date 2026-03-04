@@ -49,12 +49,12 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { asset_tag, name, type, manufacturer, model, serial_number, ip_address, mac_address, location, department, assigned_to, status, purchase_date, warranty_expiry, vendor_id, notes, metadata } = body;
+    const { asset_tag, name, type, manufacturer, model, serial_number, ip_address, mac_address, location, department, assigned_to, status, purchase_date, warranty_expiry, vendor_id, notes, metadata, company_name, product_name, os_version, config, previous_user, cost, invoice_number, invoice_path, maintenance_schedule, email, phone, user_id_tag, office_app_id, software, log_retention, warranty_period } = body;
 
     const result = await pool.query(
-      `INSERT INTO assets (asset_tag, name, type, manufacturer, model, serial_number, ip_address, mac_address, location, department, assigned_to, status, purchase_date, warranty_expiry, vendor_id, notes, metadata)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17) RETURNING *`,
-      [asset_tag, name, type, manufacturer, model, serial_number, ip_address, mac_address, location, department, assigned_to || null, status || 'Active', purchase_date, warranty_expiry, vendor_id || null, notes, metadata ? JSON.stringify(metadata) : '{}']
+      `INSERT INTO assets (asset_tag, name, type, manufacturer, model, serial_number, ip_address, mac_address, location, department, assigned_to, status, purchase_date, warranty_expiry, vendor_id, notes, metadata, company_name, product_name, os_version, config, previous_user, cost, invoice_number, invoice_path, maintenance_schedule, email, phone, user_id_tag, office_app_id, software, log_retention, warranty_period)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33) RETURNING *`,
+      [asset_tag, name, type, manufacturer, model, serial_number, ip_address, mac_address, location, department, assigned_to || null, status || 'Active', purchase_date, warranty_expiry, vendor_id || null, notes, metadata ? JSON.stringify(metadata) : '{}', company_name, product_name, os_version, config, previous_user, cost || null, invoice_number, invoice_path, maintenance_schedule, email, phone, user_id_tag, office_app_id, software, log_retention, warranty_period]
     );
 
     await logAudit(user.id, 'CREATE', 'asset', result.rows[0].id, null, result.rows[0]);

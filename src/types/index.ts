@@ -18,6 +18,9 @@ export interface DashboardStats {
   expiringIn7Days: number;
   overduePayments: number;
   openTickets: number;
+  totalSoftware: number;
+  totalLicenses: number;
+  totalRequests: number;
 }
 
 export interface Expense {

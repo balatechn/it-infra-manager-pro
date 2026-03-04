@@ -45,7 +45,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     const oldResult = await pool.query('SELECT * FROM expenses WHERE id = $1 AND deleted_at IS NULL', [params.id]);
     if (oldResult.rows.length === 0) return NextResponse.json({ error: 'Expense not found' }, { status: 404 });
 
-    const fields = ['expense_name', 'expense_type', 'vendor_id', 'asset_id', 'category', 'amount', 'billing_type', 'start_date', 'expiry_date', 'auto_renew', 'renewal_reminder_days', 'payment_due_date', 'payment_status', 'notes', 'license_type', 'total_licenses', 'licenses_assigned', 'location_allocation', 'department_allocation'];
+    const fields = ['expense_name', 'expense_type', 'vendor_id', 'asset_id', 'category', 'amount', 'billing_type', 'start_date', 'expiry_date', 'auto_renew', 'renewal_reminder_days', 'payment_due_date', 'payment_status', 'notes', 'license_type', 'total_licenses', 'licenses_assigned', 'location_allocation', 'department_allocation', 'assigned_to', 'company_name', 'version_edition', 'invoice_number', 'cost_per_license', 'software_name', 'device_asset_tag'];
     const updates: string[] = [];
     const values: any[] = [];
     let idx = 1;

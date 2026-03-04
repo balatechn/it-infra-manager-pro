@@ -105,3 +105,62 @@ export function ExpenseCategoryPieChart({ data }: { data: { category: string; to
     </ChartCard>
   );
 }
+
+// ─── Distribution by Location (Pie) ────────────────────
+export function AssetLocationChart({ data }: { data: { name: string; value: number }[] }) {
+  return (
+    <ChartCard title="Distribution by Location">
+      <ResponsiveContainer>
+        <PieChart>
+          <Pie data={data} cx="50%" cy="50%" outerRadius={100} paddingAngle={2} dataKey="value" nameKey="name"
+            label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
+            {data.map((_, idx) => <Cell key={idx} fill={COLORS[idx % COLORS.length]} />)}
+          </Pie>
+          <Tooltip />
+          <Legend />
+        </PieChart>
+      </ResponsiveContainer>
+    </ChartCard>
+  );
+}
+
+// ─── Distribution by Product (Horizontal Bar) ──────────
+export function AssetProductChart({ data }: { data: { name: string; value: number }[] }) {
+  return (
+    <ChartCard title="Distribution by Product" height={Math.max(300, data.length * 40)}>
+      <ResponsiveContainer>
+        <BarChart data={data} layout="vertical">
+          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+          <XAxis type="number" tick={{ fontSize: 12 }} />
+          <YAxis dataKey="name" type="category" tick={{ fontSize: 11 }} width={120} />
+          <Tooltip />
+          <Bar dataKey="value" name="Count" fill="#3b82f6" radius={[0, 4, 4, 0]} />
+        </BarChart>
+      </ResponsiveContainer>
+    </ChartCard>
+  );
+}
+
+// ─── Company Names Distribution ─────────────────────────
+export function CompanyDistributionChart({ data }: { data: { name: string; value: number }[] }) {
+  const total = data.reduce((s, d) => s + d.value, 0);
+  return (
+    <ChartCard title="Company Names">
+      <div className="grid grid-cols-2 gap-4 h-full items-center">
+        {data.slice(0, 5).map((d, i) => (
+          <div key={d.name} className="flex items-center gap-3 p-2">
+            <div className="w-10 h-10 rounded-lg flex items-center justify-center text-white text-xs font-bold"
+              style={{ backgroundColor: COLORS[i % COLORS.length] }}>
+              {d.value}
+            </div>
+            <span className="text-sm text-gray-700 dark:text-gray-300 truncate">{d.name}</span>
+          </div>
+        ))}
+        <div className="flex items-center gap-3 p-2">
+          <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-gray-600 text-white text-xs font-bold">{total}</div>
+          <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Total</span>
+        </div>
+      </div>
+    </ChartCard>
+  );
+}

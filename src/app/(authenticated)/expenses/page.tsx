@@ -13,7 +13,7 @@ import RenewalCalendar from '@/components/charts/RenewalCalendar';
 const expenseTypes = ['Software', 'AMC', 'Internet', 'Cloud', 'Hardware', 'Security', 'Domain', 'Misc'].map(v => ({ value: v, label: v }));
 const billingTypes = ['Monthly', 'Quarterly', 'Yearly', 'One-Time'].map(v => ({ value: v, label: v }));
 const paymentStatuses = ['Paid', 'Pending', 'Overdue'].map(v => ({ value: v, label: v }));
-const licenseTypes = ['Per User', 'Per Device', 'Enterprise', 'Subscription'].map(v => ({ value: v, label: v }));
+const licenseTypes = ['Per User', 'Per Device', 'Enterprise', 'Subscription', 'Perpetual'].map(v => ({ value: v, label: v }));
 
 export default function ExpensesPage() {
   const [page, setPage] = useState(1);
@@ -33,6 +33,7 @@ export default function ExpensesPage() {
   const { data: forecast } = useApi<any>('/expenses/forecast');
   const { data: vendorsList } = useApi<any>('/vendors?limit=200');
   const { data: assetsList } = useApi<any>('/assets?limit=200');
+  const { data: usersList } = useApi<any>('/settings/users');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -177,61 +178,77 @@ export default function ExpensesPage() {
       )}
 
       {/* Add/Edit Expense Modal */}
-      <Modal open={showModal} onClose={() => setShowModal(false)} title={editing ? 'Edit Expense' : 'Add Expense'} size="xl">
-        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <Input label="Expense Name" value={form.expense_name || ''} onChange={e => setForm({ ...form, expense_name: e.target.value })} required />
-          <Select label="Expense Type" options={expenseTypes} value={form.expense_type || ''} onChange={e => setForm({ ...form, expense_type: e.target.value })} required />
-          <Input label="Category" value={form.category || ''} onChange={e => setForm({ ...form, category: e.target.value })} />
-          <Select label="Vendor" options={(vendorsList?.data || []).map((v: any) => ({ value: v.id, label: v.name }))} value={form.vendor_id || ''} onChange={e => setForm({ ...form, vendor_id: e.target.value })} />
-          <Select label="Linked Asset" options={(assetsList?.data || []).map((a: any) => ({ value: a.id, label: `${a.asset_tag} - ${a.name}` }))} value={form.asset_id || ''} onChange={e => setForm({ ...form, asset_id: e.target.value })} />
-          <Input label="Amount" type="number" step="0.01" value={form.amount || ''} onChange={e => setForm({ ...form, amount: e.target.value })} required />
-          <Select label="Billing Type" options={billingTypes} value={form.billing_type || ''} onChange={e => setForm({ ...form, billing_type: e.target.value })} required />
-          <Input label="Start Date" type="date" value={form.start_date || ''} onChange={e => setForm({ ...form, start_date: e.target.value })} />
-          <Input label="Expiry Date" type="date" value={form.expiry_date || ''} onChange={e => setForm({ ...form, expiry_date: e.target.value })} />
-          <Select label="Payment Status" options={paymentStatuses} value={form.payment_status || ''} onChange={e => setForm({ ...form, payment_status: e.target.value })} />
-          <Input label="Payment Due Date" type="date" value={form.payment_due_date || ''} onChange={e => setForm({ ...form, payment_due_date: e.target.value })} />
-          <Input label="Renewal Reminder (Days)" type="number" value={form.renewal_reminder_days || 30} onChange={e => setForm({ ...form, renewal_reminder_days: parseInt(e.target.value) })} />
-          <div className="flex items-center gap-2">
-            <input type="checkbox" id="auto_renew" checked={form.auto_renew || false} onChange={e => setForm({ ...form, auto_renew: e.target.checked })} />
-            <label htmlFor="auto_renew" className="text-sm text-gray-700 dark:text-gray-300">Auto Renew</label>
-          </div>
-          <Input label="Location Allocation" value={form.location_allocation || ''} onChange={e => setForm({ ...form, location_allocation: e.target.value })} />
-          <Input label="Department Allocation" value={form.department_allocation || ''} onChange={e => setForm({ ...form, department_allocation: e.target.value })} />
+      <Modal open={showModal} onClose={() => setShowModal(false)} title={editing ? 'Edit Expense / Software' : 'Add Expense / Software'} size="xl">
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Section 1: Software / Expense Identity */}
+          <Card className="p-4">
+            <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 border-b pb-2">Software / Expense Details</h4>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Input label="Expense / Software Name" value={form.expense_name || ''} onChange={e => setForm({ ...form, expense_name: e.target.value })} required />
+              <Select label="Expense Type" options={expenseTypes} value={form.expense_type || ''} onChange={e => setForm({ ...form, expense_type: e.target.value })} required />
+              <Input label="Category" value={form.category || ''} onChange={e => setForm({ ...form, category: e.target.value })} placeholder="e.g. OS, Antivirus, Office Suite, Design" />
+              <Input label="Version / Edition" value={form.version_edition || ''} onChange={e => setForm({ ...form, version_edition: e.target.value })} placeholder="e.g. v2024, Professional" />
+              <Input label="Company" value={form.company_name || ''} onChange={e => setForm({ ...form, company_name: e.target.value })} />
+              <Input label="Device / Asset Tag" value={form.device_asset_tag || ''} onChange={e => setForm({ ...form, device_asset_tag: e.target.value })} placeholder="Asset tag" />
+              <Select label="Assigned To" options={(usersList?.users || usersList || []).map((u: any) => ({ value: u.id, label: u.full_name }))} value={form.assigned_to || ''} onChange={e => setForm({ ...form, assigned_to: e.target.value })} />
+              <Select label="Vendor" options={(vendorsList?.data || []).map((v: any) => ({ value: v.id, label: v.name }))} value={form.vendor_id || ''} onChange={e => setForm({ ...form, vendor_id: e.target.value })} />
+              <Select label="Linked Asset" options={(assetsList?.data || []).map((a: any) => ({ value: a.id, label: `${a.asset_tag} - ${a.name}` }))} value={form.asset_id || ''} onChange={e => setForm({ ...form, asset_id: e.target.value })} />
+            </div>
+          </Card>
 
-          {/* Invoice Upload */}
-          <div className="flex flex-col gap-1">
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Invoice (PDF)</label>
-            <input type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={async (e) => {
-              const file = e.target.files?.[0];
-              if (!file) return;
-              const fd = new FormData();
-              fd.append('file', file);
-              try {
-                const res = await api.post('/upload', fd);
-                setForm({ ...form, invoice_path: res.path });
-              } catch (err: any) { alert(err.message); }
-            }} className="text-sm text-gray-500 file:mr-2 file:py-1 file:px-3 file:rounded-lg file:border file:border-gray-300 file:text-xs file:font-medium file:bg-white dark:file:bg-gray-700 file:text-gray-700 dark:file:text-gray-300 hover:file:bg-gray-50" />
-            {form.invoice_path && <span className="text-xs text-green-600">Invoice attached</span>}
-          </div>
-
-          {/* Software License Fields */}
-          {form.expense_type === 'Software' && (
-            <>
-              <div className="md:col-span-2 lg:col-span-3 border-t pt-4 mt-2">
-                <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Software License Details</h4>
+          {/* Section 2: Cost & Billing */}
+          <Card className="p-4">
+            <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 border-b pb-2">Cost & Billing</h4>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Input label="Total Cost (INR)" type="number" step="0.01" value={form.amount || ''} onChange={e => setForm({ ...form, amount: e.target.value })} required />
+              <Select label="Billing Type" options={billingTypes} value={form.billing_type || ''} onChange={e => setForm({ ...form, billing_type: e.target.value })} required />
+              <Input label="Invoice Number" value={form.invoice_number || ''} onChange={e => setForm({ ...form, invoice_number: e.target.value })} />
+              <Input label="Purchase / Start Date" type="date" value={form.start_date || ''} onChange={e => setForm({ ...form, start_date: e.target.value })} />
+              <Input label="Renewal / Expiry Date" type="date" value={form.expiry_date || ''} onChange={e => setForm({ ...form, expiry_date: e.target.value })} />
+              <Select label="Payment Status" options={paymentStatuses} value={form.payment_status || ''} onChange={e => setForm({ ...form, payment_status: e.target.value })} />
+              <Input label="Payment Due Date" type="date" value={form.payment_due_date || ''} onChange={e => setForm({ ...form, payment_due_date: e.target.value })} />
+              <Input label="Renewal Reminder (Days)" type="number" value={form.renewal_reminder_days || 30} onChange={e => setForm({ ...form, renewal_reminder_days: parseInt(e.target.value) })} />
+              <div className="flex items-center gap-2 self-end pb-2">
+                <input type="checkbox" id="auto_renew" checked={form.auto_renew || false} onChange={e => setForm({ ...form, auto_renew: e.target.checked })} />
+                <label htmlFor="auto_renew" className="text-sm text-gray-700 dark:text-gray-300">Auto Renew</label>
               </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Invoice Upload</label>
+                <div className="flex items-center gap-2">
+                  <input type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={async (ev) => {
+                    const file = ev.target.files?.[0]; if (!file) return;
+                    const fd = new FormData(); fd.append('file', file);
+                    try { const res = await api.post('/upload', fd); setForm({ ...form, invoice_path: res.url || res.path }); } catch (err: any) { alert(err.message); }
+                  }} className="text-sm text-gray-600 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-primary-50 file:text-primary-700 file:text-sm file:cursor-pointer" />
+                  {form.invoice_path && <Badge variant="success">Uploaded</Badge>}
+                </div>
+              </div>
+              <Input label="Location Allocation" value={form.location_allocation || ''} onChange={e => setForm({ ...form, location_allocation: e.target.value })} />
+              <Input label="Department Allocation" value={form.department_allocation || ''} onChange={e => setForm({ ...form, department_allocation: e.target.value })} />
+            </div>
+          </Card>
+
+          {/* Section 3: License Fields (always shown, not just for Software type) */}
+          <Card className="p-4">
+            <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 border-b pb-2">License Details</h4>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Select label="License Type" options={licenseTypes} value={form.license_type || ''} onChange={e => setForm({ ...form, license_type: e.target.value })} />
-              <Input label="Total Licenses" type="number" value={form.total_licenses || ''} onChange={e => setForm({ ...form, total_licenses: parseInt(e.target.value) })} />
-              <Input label="Licenses Assigned" type="number" value={form.licenses_assigned || ''} onChange={e => setForm({ ...form, licenses_assigned: parseInt(e.target.value) })} />
-              <Input label="License Key" type="password" value={form.license_key || ''} onChange={e => setForm({ ...form, license_key: e.target.value })} />
-            </>
-          )}
+              <Input label="License Key / Activation Code" type="password" value={form.license_key || ''} onChange={e => setForm({ ...form, license_key: e.target.value })} placeholder="Will be encrypted" />
+              <Input label="Total Licenses Purchased" type="number" value={form.total_licenses || ''} onChange={e => setForm({ ...form, total_licenses: parseInt(e.target.value) })} />
+              <Input label="Licenses in Use" type="number" value={form.licenses_assigned || ''} onChange={e => setForm({ ...form, licenses_assigned: parseInt(e.target.value) })} />
+              <Input label="Cost per License (INR)" type="number" step="0.01" value={form.cost_per_license || ''} onChange={e => setForm({ ...form, cost_per_license: e.target.value })} />
+              <div className="flex items-center self-end pb-2">
+                <span className="text-sm text-gray-500">Available: <strong>{(form.total_licenses || 0) - (form.licenses_assigned || 0)}</strong></span>
+              </div>
+            </div>
+          </Card>
 
-          <div className="md:col-span-2 lg:col-span-3">
-            <Textarea label="Notes" value={form.notes || ''} onChange={e => setForm({ ...form, notes: e.target.value })} />
-          </div>
+          {/* Section 4: Remarks */}
+          <Card className="p-4">
+            <Textarea label="Remarks / Notes" value={form.notes || ''} onChange={e => setForm({ ...form, notes: e.target.value })} />
+          </Card>
 
-          <div className="md:col-span-2 lg:col-span-3 flex justify-end gap-3 mt-2">
+          <div className="flex justify-end gap-3">
             <Button variant="secondary" type="button" onClick={() => setShowModal(false)}>Cancel</Button>
             <Button type="submit">{editing ? 'Update' : 'Create'}</Button>
           </div>

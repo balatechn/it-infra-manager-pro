@@ -64,15 +64,15 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { expense_name, expense_type, vendor_id, asset_id, category, amount, billing_type, start_date, expiry_date, auto_renew, renewal_reminder_days, payment_due_date, payment_status, notes, license_type, total_licenses, licenses_assigned, license_key, location_allocation, department_allocation } = body;
+    const { expense_name, expense_type, vendor_id, asset_id, category, amount, billing_type, start_date, expiry_date, auto_renew, renewal_reminder_days, payment_due_date, payment_status, notes, license_type, total_licenses, licenses_assigned, license_key, location_allocation, department_allocation, assigned_to, company_name, version_edition, invoice_number, cost_per_license, software_name, device_asset_tag } = body;
 
     const encryptedKey = license_key ? encrypt(license_key) : null;
     const renewalStatus = getRenewalStatus(expiry_date);
 
     const result = await pool.query(
-      `INSERT INTO expenses (expense_name, expense_type, vendor_id, asset_id, category, amount, billing_type, start_date, expiry_date, auto_renew, renewal_reminder_days, payment_due_date, payment_status, notes, license_type, total_licenses, licenses_assigned, license_key_encrypted, location_allocation, department_allocation, renewal_status, created_by)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22) RETURNING *`,
-      [expense_name, expense_type, vendor_id || null, asset_id || null, category, amount, billing_type, start_date, expiry_date, auto_renew || false, renewal_reminder_days || 30, payment_due_date, payment_status || 'Pending', notes, license_type, total_licenses, licenses_assigned || 0, encryptedKey, location_allocation, department_allocation, renewalStatus, user.id]
+      `INSERT INTO expenses (expense_name, expense_type, vendor_id, asset_id, category, amount, billing_type, start_date, expiry_date, auto_renew, renewal_reminder_days, payment_due_date, payment_status, notes, license_type, total_licenses, licenses_assigned, license_key_encrypted, location_allocation, department_allocation, renewal_status, created_by, assigned_to, company_name, version_edition, invoice_number, cost_per_license, software_name, device_asset_tag)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29) RETURNING *`,
+      [expense_name, expense_type, vendor_id || null, asset_id || null, category, amount, billing_type, start_date, expiry_date, auto_renew || false, renewal_reminder_days || 30, payment_due_date, payment_status || 'Pending', notes, license_type, total_licenses, licenses_assigned || 0, encryptedKey, location_allocation, department_allocation, renewalStatus, user.id, assigned_to || null, company_name, version_edition, invoice_number, cost_per_license || null, software_name, device_asset_tag]
     );
 
     await logAudit(user.id, 'CREATE', 'expense', result.rows[0].id, null, { ...result.rows[0], license_key_encrypted: '[REDACTED]' });
