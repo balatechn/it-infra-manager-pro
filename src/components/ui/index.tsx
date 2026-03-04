@@ -63,6 +63,7 @@ interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
 }
 
 export function Select({ label, options, className, id, ...props }: SelectProps) {
+  const safeOptions = Array.isArray(options) ? options : [];
   return (
     <div className="w-full">
       {label && <label htmlFor={id} className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{label}</label>}
@@ -76,7 +77,7 @@ export function Select({ label, options, className, id, ...props }: SelectProps)
         {...props}
       >
         <option value="">Select...</option>
-        {options.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+        {safeOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
       </select>
     </div>
   );

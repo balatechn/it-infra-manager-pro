@@ -4,6 +4,14 @@ export function cn(...inputs: ClassValue[]) {
   return clsx(inputs);
 }
 
+/** Safely extract an array from API data — handles paginated { data: [...] } or plain arrays */
+export function safeArray(val: any, key = 'data'): any[] {
+  if (!val) return [];
+  if (Array.isArray(val)) return val;
+  if (val[key] && Array.isArray(val[key])) return val[key];
+  return [];
+}
+
 export function formatCurrency(amount: number): string {
   return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 0 }).format(amount);
 }

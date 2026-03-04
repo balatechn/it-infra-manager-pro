@@ -48,6 +48,7 @@ export default function SettingsPage() {
 function UsersSection() {
   const { data, loading, refetch } = useApi<any>('/settings/users');
   const { data: roles } = useApi<any[]>('/settings/roles');
+  const rolesArr = Array.isArray(roles) ? roles : [];
   const [show, setShow] = useState(false);
   const [editing, setEditing] = useState<any>(null);
   const [form, setForm] = useState({ full_name: '', email: '', password: '', role_id: '', is_active: true });
@@ -91,7 +92,7 @@ function UsersSection() {
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Users</h3>
           <Button size="sm" onClick={openAdd}><Plus size={14} /> Add User</Button>
         </div>
-        {loading ? <Spinner /> : <DataTable columns={cols} data={(data as any)?.users || data || []} />}
+        {loading ? <Spinner /> : <DataTable columns={cols} data={(data as any)?.data || []} />}
       </Card>
 
       <Modal open={show} onClose={() => setShow(false)} title={editing ? 'Edit User' : 'Add User'} size="md">
@@ -99,7 +100,7 @@ function UsersSection() {
           <Input label="Full Name" value={form.full_name} onChange={e => setForm({ ...form, full_name: e.target.value })} />
           <Input label="Email" type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
           <Input label={editing ? 'New Password (leave blank to keep)' : 'Password'} type="password" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} />
-          <Select label="Role" value={form.role_id} onChange={e => setForm({ ...form, role_id: e.target.value })} options={(roles || []).map((r: any) => ({ value: r.id, label: r.name }))} />
+          <Select label="Role" value={form.role_id} onChange={e => setForm({ ...form, role_id: e.target.value })} options={rolesArr.map((r: any) => ({ value: r.id, label: r.name }))} />
           <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" checked={form.is_active} onChange={e => setForm({ ...form, is_active: e.target.checked })} /> Active
           </label>
@@ -300,7 +301,7 @@ function AuditSection() {
           </select>
         </div>
       </div>
-      {loading ? <Spinner /> : <DataTable columns={cols} data={(data as any)?.logs || data || []} emptyMessage="No audit logs" />}
+      {loading ? <Spinner /> : <DataTable columns={cols} data={(data as any)?.data || []} emptyMessage="No audit logs" />}
     </Card>
   );
 }

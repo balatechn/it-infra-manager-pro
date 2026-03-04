@@ -5,7 +5,7 @@ import api from '@/lib/api';
 import PageHeader from '@/components/layout/PageHeader';
 import DataTable, { Pagination } from '@/components/tables/DataTable';
 import { Button, Input, Select, Modal, Textarea, Badge } from '@/components/ui';
-import { formatDate } from '@/lib/utils';
+import { formatDate, safeArray } from '@/lib/utils';
 import { Plus, Search } from 'lucide-react';
 import type { SnmpDevice, PaginatedResponse } from '@/types';
 
@@ -19,6 +19,7 @@ export default function SnmpPage() {
 
   const { data, loading, refetch } = useApi<PaginatedResponse<SnmpDevice>>(`/snmp?page=${page}&search=${search}`);
   const { data: assetsList } = useApi<any>('/assets?limit=200');
+  const assets = safeArray(assetsList);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -84,7 +85,7 @@ export default function SnmpPage() {
           <Input label="IP Address" value={form.ip_address || ''} onChange={e => setForm({ ...form, ip_address: e.target.value })} required />
           <Input label="Hostname" value={form.hostname || ''} onChange={e => setForm({ ...form, hostname: e.target.value })} />
           <Select label="SNMP Version" options={[{ value: 'v1', label: 'v1' }, { value: 'v2c', label: 'v2c' }, { value: 'v3', label: 'v3' }]} value={form.snmp_version || 'v2c'} onChange={e => setForm({ ...form, snmp_version: e.target.value })} />
-          <Select label="Linked Asset" options={(assetsList?.data || []).map((a: any) => ({ value: a.id, label: `${a.asset_tag} - ${a.name}` }))} value={form.asset_id || ''} onChange={e => setForm({ ...form, asset_id: e.target.value })} />
+          <Select label="Linked Asset" options={assets.map((a: any) => ({ value: a.id, label: `${a.asset_tag} - ${a.name}` }))} value={form.asset_id || ''} onChange={e => setForm({ ...form, asset_id: e.target.value })} />
           <Input label="Community String" value={form.community_string || 'public'} onChange={e => setForm({ ...form, community_string: e.target.value })} />
           <Input label="Port" type="number" value={form.port || 161} onChange={e => setForm({ ...form, port: parseInt(e.target.value) })} />
           <Input label="Poll Interval (sec)" type="number" value={form.poll_interval || 300} onChange={e => setForm({ ...form, poll_interval: parseInt(e.target.value) })} />

@@ -5,7 +5,7 @@ import api from '@/lib/api';
 import PageHeader from '@/components/layout/PageHeader';
 import DataTable, { Pagination } from '@/components/tables/DataTable';
 import { Button, Input, Select, Modal, Textarea, Badge, Card } from '@/components/ui';
-import { formatDate } from '@/lib/utils';
+import { formatDate, safeArray } from '@/lib/utils';
 import { Plus, Search } from 'lucide-react';
 import type { Ticket, PaginatedResponse } from '@/types';
 
@@ -27,8 +27,12 @@ export default function TicketsPage() {
   const { data: mastersList } = useApi<any>('/settings/masters');
   const { data: assetsList } = useApi<any>('/assets?limit=200');
 
+  const users = safeArray(usersList);
+  const masters = safeArray(mastersList);
+  const assets = safeArray(assetsList);
+
   // Pull locations from masters
-  const locationOptions = (mastersList || [])
+  const locationOptions = masters
     .filter((m: any) => m.type === 'location' && m.is_active)
     .map((m: any) => ({ value: m.name, label: m.name }));
 
@@ -100,7 +104,7 @@ export default function TicketsPage() {
             <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3 border-b pb-2">Task & Requester Details</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Select label="Task *" options={taskTypes} value={form.task_type || 'REQUEST'} onChange={e => setForm({ ...form, task_type: e.target.value })} required />
-              <Select label="Task Owner" options={(usersList?.users || usersList || []).map((u: any) => ({ value: u.id, label: u.full_name }))} value={form.assigned_to || ''} onChange={e => setForm({ ...form, assigned_to: e.target.value })} />
+              <Select label="Task Owner" options={users.map((u: any) => ({ value: u.id, label: u.full_name }))} value={form.assigned_to || ''} onChange={e => setForm({ ...form, assigned_to: e.target.value })} />
               <Input label="Date" type="date" value={form.task_date || ''} onChange={e => setForm({ ...form, task_date: e.target.value })} />
               <Input label="Name" value={form.requester_name || ''} onChange={e => setForm({ ...form, requester_name: e.target.value })} placeholder="Requester name" />
               <Input label="Email" type="email" value={form.requester_email || ''} onChange={e => setForm({ ...form, requester_email: e.target.value })} placeholder="Requester email" />
@@ -118,7 +122,7 @@ export default function TicketsPage() {
               <Input label="Issue" value={form.issue || ''} onChange={e => setForm({ ...form, issue: e.target.value })} placeholder="Brief issue description" />
               <Input label="Due Date" type="date" value={form.due_date || ''} onChange={e => setForm({ ...form, due_date: e.target.value })} />
               <Select label="Priority" options={priorities} value={form.priority || 'Medium'} onChange={e => setForm({ ...form, priority: e.target.value })} />
-              <Select label="Linked Asset" options={(assetsList?.data || []).map((a: any) => ({ value: a.id, label: `${a.asset_tag} - ${a.name || a.product_name || a.type}` }))} value={form.asset_id || ''} onChange={e => setForm({ ...form, asset_id: e.target.value })} />
+              <Select label="Linked Asset" options={assets.map((a: any) => ({ value: a.id, label: `${a.asset_tag} - ${a.name || a.product_name || a.type}` }))} value={form.asset_id || ''} onChange={e => setForm({ ...form, asset_id: e.target.value })} />
               <Input label="Category" value={form.category || ''} onChange={e => setForm({ ...form, category: e.target.value })} placeholder="e.g. Hardware, Software, Network" />
             </div>
             <div className="mt-4">

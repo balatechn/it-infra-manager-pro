@@ -5,7 +5,7 @@ import api from '@/lib/api';
 import PageHeader from '@/components/layout/PageHeader';
 import DataTable, { Pagination } from '@/components/tables/DataTable';
 import { Button, Input, Select, Modal, Textarea, Badge, Card } from '@/components/ui';
-import { formatDate, formatCurrency } from '@/lib/utils';
+import { formatDate, formatCurrency, safeArray } from '@/lib/utils';
 import { Plus, Search, Upload } from 'lucide-react';
 import type { Asset, PaginatedResponse } from '@/types';
 
@@ -24,6 +24,9 @@ export default function AssetsPage() {
   const { data, loading, refetch } = useApi<PaginatedResponse<Asset>>(`/assets?page=${page}&search=${search}`);
   const { data: vendorsList } = useApi<any>('/vendors?limit=200');
   const { data: usersList } = useApi<any>('/settings/users');
+
+  const users = safeArray(usersList);
+  const vendors = safeArray(vendorsList);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -90,7 +93,7 @@ export default function AssetsPage() {
             <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 border-b pb-2">User & Assignment Details</h4>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Input label="User ID" value={form.user_id_tag || ''} onChange={e => setForm({ ...form, user_id_tag: e.target.value })} placeholder="User identifier" />
-              <Select label="Assigned To (Name)" options={(usersList?.users || usersList || []).map((u: any) => ({ value: u.id, label: u.full_name }))} value={form.assigned_to || ''} onChange={e => setForm({ ...form, assigned_to: e.target.value })} />
+              <Select label="Assigned To (Name)" options={users.map((u: any) => ({ value: u.id, label: u.full_name }))} value={form.assigned_to || ''} onChange={e => setForm({ ...form, assigned_to: e.target.value })} />
               <Input label="Phone" value={form.phone || ''} onChange={e => setForm({ ...form, phone: e.target.value })} placeholder="+91 XXXXX XXXXX" />
               <Input label="Email ID" type="email" value={form.email || ''} onChange={e => setForm({ ...form, email: e.target.value })} />
               <Input label="Company Name" value={form.company_name || ''} onChange={e => setForm({ ...form, company_name: e.target.value })} placeholder="e.g. Rainland Auto Corps" />
@@ -128,7 +131,7 @@ export default function AssetsPage() {
           <Card className="p-4">
             <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 border-b pb-2">Purchase & Vendor Details</h4>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Select label="Vendor" options={(vendorsList?.data || []).map((v: any) => ({ value: v.id, label: v.name }))} value={form.vendor_id || ''} onChange={e => setForm({ ...form, vendor_id: e.target.value })} />
+              <Select label="Vendor" options={vendors.map((v: any) => ({ value: v.id, label: v.name }))} value={form.vendor_id || ''} onChange={e => setForm({ ...form, vendor_id: e.target.value })} />
               <Input label="Purchase Date" type="date" value={form.purchase_date || ''} onChange={e => setForm({ ...form, purchase_date: e.target.value })} />
               <Input label="Cost" type="number" value={form.cost || ''} onChange={e => setForm({ ...form, cost: e.target.value })} placeholder="Purchase cost" />
               <Input label="Invoice Number" value={form.invoice_number || ''} onChange={e => setForm({ ...form, invoice_number: e.target.value })} />

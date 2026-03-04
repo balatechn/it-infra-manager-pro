@@ -19,7 +19,8 @@ interface DataTableProps<T> {
 
 export default function DataTable<T extends Record<string, any>>({ columns, data, loading, onRowClick, emptyMessage }: DataTableProps<T>) {
   if (loading) return <Spinner />;
-  if (!data || data.length === 0) return <EmptyState message={emptyMessage || 'No records found'} />;
+  const safeData = Array.isArray(data) ? data : [];
+  if (safeData.length === 0) return <EmptyState message={emptyMessage || 'No records found'} />;
 
   return (
     <Card className="overflow-hidden">
@@ -35,7 +36,7 @@ export default function DataTable<T extends Record<string, any>>({ columns, data
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-            {data.map((row, idx) => (
+            {safeData.map((row, idx) => (
               <tr
                 key={row.id || idx}
                 onClick={() => onRowClick?.(row)}

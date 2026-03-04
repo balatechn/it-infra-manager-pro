@@ -122,7 +122,7 @@ export default function VendorsPage() {
                 </Card>
               </div>
             )}
-            {selectedVendor.expenses && selectedVendor.expenses.length > 0 && (
+            {Array.isArray(selectedVendor.expenses) && selectedVendor.expenses.length > 0 && (
               <div>
                 <h4 className="text-sm font-semibold mb-2">Related Expenses ({selectedVendor.expenses.length})</h4>
                 <div className="space-y-2 max-h-60 overflow-y-auto">

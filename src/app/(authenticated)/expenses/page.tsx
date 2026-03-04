@@ -5,7 +5,7 @@ import api from '@/lib/api';
 import PageHeader from '@/components/layout/PageHeader';
 import DataTable, { Pagination } from '@/components/tables/DataTable';
 import { Button, Input, Select, Modal, Textarea, Badge, Card } from '@/components/ui';
-import { formatCurrency, formatDate, getRenewalBadge, getPaymentBadge } from '@/lib/utils';
+import { formatCurrency, formatDate, getRenewalBadge, getPaymentBadge, safeArray } from '@/lib/utils';
 import { Plus, Search, RefreshCw, Calendar, TrendingUp, List } from 'lucide-react';
 import type { Expense, PaginatedResponse } from '@/types';
 import RenewalCalendar from '@/components/charts/RenewalCalendar';
@@ -34,6 +34,10 @@ export default function ExpensesPage() {
   const { data: vendorsList } = useApi<any>('/vendors?limit=200');
   const { data: assetsList } = useApi<any>('/assets?limit=200');
   const { data: usersList } = useApi<any>('/settings/users');
+
+  const users = safeArray(usersList);
+  const vendorsArr = safeArray(vendorsList);
+  const assetsArr = safeArray(assetsList);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -190,9 +194,9 @@ export default function ExpensesPage() {
               <Input label="Version / Edition" value={form.version_edition || ''} onChange={e => setForm({ ...form, version_edition: e.target.value })} placeholder="e.g. v2024, Professional" />
               <Input label="Company" value={form.company_name || ''} onChange={e => setForm({ ...form, company_name: e.target.value })} />
               <Input label="Device / Asset Tag" value={form.device_asset_tag || ''} onChange={e => setForm({ ...form, device_asset_tag: e.target.value })} placeholder="Asset tag" />
-              <Select label="Assigned To" options={(usersList?.users || usersList || []).map((u: any) => ({ value: u.id, label: u.full_name }))} value={form.assigned_to || ''} onChange={e => setForm({ ...form, assigned_to: e.target.value })} />
-              <Select label="Vendor" options={(vendorsList?.data || []).map((v: any) => ({ value: v.id, label: v.name }))} value={form.vendor_id || ''} onChange={e => setForm({ ...form, vendor_id: e.target.value })} />
-              <Select label="Linked Asset" options={(assetsList?.data || []).map((a: any) => ({ value: a.id, label: `${a.asset_tag} - ${a.name}` }))} value={form.asset_id || ''} onChange={e => setForm({ ...form, asset_id: e.target.value })} />
+              <Select label="Assigned To" options={users.map((u: any) => ({ value: u.id, label: u.full_name }))} value={form.assigned_to || ''} onChange={e => setForm({ ...form, assigned_to: e.target.value })} />
+              <Select label="Vendor" options={vendorsArr.map((v: any) => ({ value: v.id, label: v.name }))} value={form.vendor_id || ''} onChange={e => setForm({ ...form, vendor_id: e.target.value })} />
+              <Select label="Linked Asset" options={assetsArr.map((a: any) => ({ value: a.id, label: `${a.asset_tag} - ${a.name}` }))} value={form.asset_id || ''} onChange={e => setForm({ ...form, asset_id: e.target.value })} />
             </div>
           </Card>
 
@@ -296,7 +300,7 @@ export default function ExpensesPage() {
               </div>
             )}
             {/* Renewal History */}
-            {selectedExpense.renewal_history && selectedExpense.renewal_history.length > 0 && (
+            {Array.isArray(selectedExpense.renewal_history) && selectedExpense.renewal_history.length > 0 && (
               <div>
                 <h4 className="text-sm font-semibold mb-2">Renewal History</h4>
                 <div className="space-y-2">
