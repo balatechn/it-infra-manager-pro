@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
     const params: any[] = [];
     let idx = 1;
 
-    if (search) { where += ` AND (t.title ILIKE $${idx} OR t.ticket_number ILIKE $${idx})`; params.push(`%${search}%`); idx++; }
+    if (search) { where += ` AND (t.title ILIKE $${idx} OR t.ticket_number ILIKE $${idx} OR t.requester_name ILIKE $${idx} OR t.issue ILIKE $${idx})`; params.push(`%${search}%`); idx++; }
     if (status) { where += ` AND t.status = $${idx}`; params.push(status); idx++; }
     if (priority) { where += ` AND t.priority = $${idx}`; params.push(priority); idx++; }
     if (assigned_to) { where += ` AND t.assigned_to = $${idx}`; params.push(assigned_to); idx++; }
@@ -49,11 +49,16 @@ export async function POST(request: NextRequest) {
     const countRes = await pool.query('SELECT COUNT(*) FROM tickets');
     const ticketNumber = `TKT-${String(parseInt(countRes.rows[0].count) + 1).padStart(5, '0')}`;
 
-    const { title, description, priority, category, asset_id, assigned_to, notes } = await request.json();
+    const body = await request.json();
+    const { title, description, priority, category, asset_id, assigned_to, notes,
+      task_type, task_date, requester_name, requester_email, cc_email, company,
+      location, service_product, issue, due_date, remark, update_log, status } = body;
     const result = await pool.query(
-      `INSERT INTO tickets (ticket_number, title, description, priority, category, asset_id, assigned_to, created_by, notes)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`,
-      [ticketNumber, title, description, priority || 'Medium', category, asset_id || null, assigned_to || null, user.id, notes]
+      `INSERT INTO tickets (ticket_number, title, description, priority, status, category, asset_id, assigned_to, created_by, notes,
+        task_type, task_date, requester_name, requester_email, cc_email, company, location, service_product, issue, due_date, remark, update_log)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22) RETURNING *`,
+      [ticketNumber, title, description, priority || 'Medium', status || 'PENDING', category, asset_id || null, assigned_to || null, user.id, notes,
+        task_type || 'REQUEST', task_date || null, requester_name, requester_email, cc_email, company, location, service_product, issue, due_date || null, remark, update_log]
     );
 
     await logAudit(user.id, 'CREATE', 'ticket', result.rows[0].id, null, result.rows[0]);

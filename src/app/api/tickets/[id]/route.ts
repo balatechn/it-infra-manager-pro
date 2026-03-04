@@ -26,7 +26,8 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 
   try {
     const body = await request.json();
-    const fields = ['title', 'description', 'priority', 'status', 'category', 'asset_id', 'assigned_to', 'notes'];
+    const fields = ['title', 'description', 'priority', 'status', 'category', 'asset_id', 'assigned_to', 'notes',
+      'task_type', 'task_date', 'requester_name', 'requester_email', 'cc_email', 'company', 'location', 'service_product', 'issue', 'due_date', 'remark', 'update_log'];
     const updates: string[] = [];
     const values: any[] = [];
     let idx = 1;

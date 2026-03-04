@@ -120,6 +120,18 @@ export interface Ticket {
   assigned_to_name?: string;
   created_by_name?: string;
   created_at: string;
+  task_type?: string;
+  task_date?: string;
+  requester_name?: string;
+  requester_email?: string;
+  cc_email?: string;
+  company?: string;
+  location?: string;
+  service_product?: string;
+  issue?: string;
+  due_date?: string;
+  remark?: string;
+  update_log?: string;
 }
 
 export interface SnmpDevice {
